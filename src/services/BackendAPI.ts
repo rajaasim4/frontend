@@ -2,10 +2,17 @@ import { FinancialIssue, IssueId, UserId } from "../model";
 import Decimal from "decimal.js";
 import { BackendAPIMock } from "src/__mocks__";
 import {
+  CreatePaymentIntentBody,
+  CreatePaymentIntentParams,
+  CreatePaymentIntentQuery,
+  CreatePaymentIntentResponse,
   FundIssueBody,
   FundIssueParams,
   FundIssueQuery,
   GetAvailableDowResponse,
+  GetDowPricesParams,
+  GetDowPricesQuery,
+  GetDowPricesResponse,
   GetIssueParams,
   GetIssueQuery,
   GetIssueResponse,
@@ -72,6 +79,14 @@ export interface BackendAPI {
 
   // TODO: maybe internal to the backend?
   updateIssueGitHubStatus(issueId: IssueId, status: string): Promise<void | ApiError>;
+
+  createPaymentIntent(
+    params: CreatePaymentIntentParams,
+    body: CreatePaymentIntentBody,
+    query: CreatePaymentIntentQuery,
+  ): Promise<CreatePaymentIntentResponse | ApiError>;
+
+  getDowPrices(params: GetDowPricesParams, query: GetDowPricesQuery): Promise<GetDowPricesResponse | ApiError>;
 }
 
 class BackendAPIImpl implements BackendAPI {
@@ -128,5 +143,17 @@ class BackendAPIImpl implements BackendAPI {
 
   async updateIssueGitHubStatus(issueId: IssueId, status: string): Promise<void | ApiError> {
     return Promise.resolve(undefined);
+  }
+
+  async createPaymentIntent(
+    params: CreatePaymentIntentParams,
+    body: CreatePaymentIntentBody,
+    query: CreatePaymentIntentQuery,
+  ): Promise<CreatePaymentIntentResponse | ApiError> {
+    return handleError(() => axios.post(`${config.api.url}/shop/create-payment-intent`, body, { withCredentials: true }), "createPaymentIntent");
+  }
+
+  async getDowPrices(params: GetDowPricesParams, query: GetDowPricesQuery): Promise<GetDowPricesResponse | ApiError> {
+    return handleError(() => axios.get(`${config.api.url}/shop/dow-prices`, { withCredentials: true }), "getDowPrices");
   }
 }

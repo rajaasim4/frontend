@@ -82,6 +82,18 @@ export function Payment(props: PaymentProps) {
             </div>
           </div>
         </div>
+
+        <div className="items-start justify-center mt-7 ">
+          <div className="bg-[#14233A] rounded-[30px] p-4">
+            <div className="relative bg-[#223046] p-1 rounded-[10px] border-2 border-[#FF5E1A] border-dashed max-w-full">
+              <Coupon />
+            </div>
+            <PriceItems />
+          </div>
+          <div className="bg-[#14233A] rounded-[30px] p-4 mt-4">
+            <Card />
+          </div>
+        </div>
       </div>
     </PageWrapper>
   );

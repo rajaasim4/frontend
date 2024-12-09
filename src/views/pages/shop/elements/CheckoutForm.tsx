@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import { LinkAuthenticationElement, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import * as stripeJs from "@stripe/stripe-js";
 import { FieldOption } from "@stripe/stripe-js/dist/stripe-js/elements/payment";
+import { getBackendAPI } from "src/services";
+import { ApiError } from "src/ultils/error/ApiError";
+import { CreatePaymentIntentBody } from "src/dtos";
+import { StripeCustomerId } from "src/model";
 
 interface CheckoutFormProps {}
 
 export function CheckoutForm(props: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const backendApi = getBackendAPI();
   const [message, setMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -20,24 +25,32 @@ export function CheckoutForm(props: CheckoutFormProps) {
       return;
     }
 
-    setIsLoading(true);
+    setIsProcessing(true);
 
     // Create the PaymentIntent and obtain clientSecret
-    const res = await fetch("http://localhost:3001/api/v1/shop/create-payment-intent", {
-      method: "POST",
-    });
-    const paymentIntent = await res.json();
-    const clientSecret = paymentIntent.client_secret;
+    const body: CreatePaymentIntentBody = {
+      stripeCustomerId: new StripeCustomerId("cus_123"),
+      priceItems: [],
+    };
+
+    const paymentIntent = await backendApi.createPaymentIntent({}, body, {});
+    if (paymentIntent instanceof ApiError) {
+      setMessage(paymentIntent.message);
+      return;
+    } else if (!paymentIntent.paymentIntent.client_secret) {
+      setMessage("Client secret not found");
+      return;
+    }
+
+    const clientSecret = paymentIntent.paymentIntent.client_secret;
 
     // Confirm the PaymentIntent using the details collected by the Express Checkout Element
     const { error } = await stripe.confirmPayment({
-      // `elements` instance used to create the Express Checkout Element
       elements,
-      // `clientSecret` from the created PaymentIntent
       clientSecret,
       confirmParams: {
         // Make sure to change this to your payment completion page
-        return_url: `${window.location.origin}/completion`,
+        return_url: `${window.location.origin}/completion`, // TODO: lolo
       },
     });
 
@@ -49,10 +62,10 @@ export function CheckoutForm(props: CheckoutFormProps) {
     if (error.type === "card_error" || error.type === "validation_error") {
       setMessage(error.message ?? null);
     } else {
-      setMessage("An unexpected error occured.");
+      setMessage("An unexpected error occurred.");
     }
 
-    setIsLoading(false);
+    setIsProcessing(false);
   };
 
   const linkAuthenticationElementOptions: stripeJs.StripeLinkAuthenticationElementOptions = {
@@ -60,6 +73,7 @@ export function CheckoutForm(props: CheckoutFormProps) {
       email: "lauriane@gmail.com",
     },
   };
+
   const paymentElementOptions: stripeJs.StripePaymentElementOptions = {
     defaultValues: {
       billingDetails: {
@@ -76,13 +90,22 @@ export function CheckoutForm(props: CheckoutFormProps) {
 
   return (
     <form id="payment-form" onSubmit={handleSubmit}>
-      <LinkAuthenticationElement id="link-authentication-element" options={linkAuthenticationElementOptions} />
-      <PaymentElement id="payment-element" options={paymentElementOptions} />
-      <button disabled={isLoading || !stripe || !elements} id="submit">
-        <span id="button-text">{isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}</span>
+      <PaymentElement id="payment-element" />
+      <button disabled={isProcessing || !stripe || !elements} id="submit">
+        <span id="button-text">{isProcessing ? "Processing ... " : "Pay now"}</span>
       </button>
       {/* Show any error or success messages */}
       {message && <div id="payment-message">{message}</div>}
     </form>
+
+    // <form id="payment-form" onSubmit={handleSubmit}>
+    //   <LinkAuthenticationElement id="link-authentication-element" options={linkAuthenticationElementOptions} />
+    //   <PaymentElement id="payment-element" options={paymentElementOptions} />
+    //   <button disabled={isLoading || !stripe || !elements} id="submit">
+    //     <span id="button-text">{isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}</span>
+    //   </button>
+    //   {/* Show any error or success messages */}
+    //   {message && <div id="payment-message">{message}</div>}
+    // </form>
   );
 }
