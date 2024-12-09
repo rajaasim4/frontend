@@ -13,6 +13,7 @@ export function CheckoutForm(props: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const backendApi = getBackendAPI();
+
   const [message, setMessage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -53,6 +54,14 @@ export function CheckoutForm(props: CheckoutFormProps) {
         return_url: `${window.location.origin}/completion`, // TODO: lolo
       },
     });
+    // TODO: lolo
+    // When you specify the return_url, you can also append your own query parameters for use on the return page.
+    //
+    // Parameter	Description
+    // payment_intent	The unique identifier for the PaymentIntent.
+    // payment_intent_client_secret	The client secret of the PaymentIntent object.
+
+
 
     // This point will only be reached if there is an immediate error when
     // confirming the payment. Otherwise, your customer will be redirected to
@@ -89,23 +98,23 @@ export function CheckoutForm(props: CheckoutFormProps) {
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit}>
-      <PaymentElement id="payment-element" />
-      <button disabled={isProcessing || !stripe || !elements} id="submit">
-        <span id="button-text">{isProcessing ? "Processing ... " : "Pay now"}</span>
-      </button>
-      {/* Show any error or success messages */}
-      {message && <div id="payment-message">{message}</div>}
-    </form>
-
     // <form id="payment-form" onSubmit={handleSubmit}>
-    //   <LinkAuthenticationElement id="link-authentication-element" options={linkAuthenticationElementOptions} />
-    //   <PaymentElement id="payment-element" options={paymentElementOptions} />
-    //   <button disabled={isLoading || !stripe || !elements} id="submit">
-    //     <span id="button-text">{isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}</span>
+    //   <PaymentElement id="payment-element" />
+    //   <button disabled={isProcessing || !stripe || !elements} id="submit">
+    //     <span id="button-text">{isProcessing ? "Processing ... " : "Pay now"}</span>
     //   </button>
     //   {/* Show any error or success messages */}
     //   {message && <div id="payment-message">{message}</div>}
     // </form>
+
+    <form id="payment-form" onSubmit={handleSubmit}>
+      <LinkAuthenticationElement id="link-authentication-element" options={linkAuthenticationElementOptions} />
+      <PaymentElement id="payment-element" options={paymentElementOptions} />
+      <button disabled={isProcessing || !stripe || !elements} id="submit">
+        <span id="button-text">{isProcessing ? <div className="spinner" id="spinner"></div> : "Pay now"}</span>
+      </button>
+      {/* Show any error or success messages */}
+      {message && <div id="payment-message">{message}</div>}
+    </form>
   );
 }

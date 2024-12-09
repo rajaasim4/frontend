@@ -13,7 +13,7 @@ interface ShopProps {}
 
 export function Shop(props: ShopProps) {
   const options: stripeJs.StripeElementsOptions = {
-    mode: "payment",
+    mode: "payment", // 'payment' | 'setup' | 'subscription'
     amount: 1099,
     currency: "usd",
     appearance: {
